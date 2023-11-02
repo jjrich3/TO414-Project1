@@ -85,40 +85,40 @@ ins_test_all = ins_norm[test_set,]
 #fp = false positives (customers we called but did not buy a term deposit).
 #tp = true positives (customers we called and they did buy a term deposit).
 #old_rate = old call success rate, based on test data from confusion matrix, usually around 0.11.
-calcu = function(fp,tp, old_rate) {
+#calcu = function(fp,tp, old_rate) {
   #revenue
-  rev = tp * 11
+#  rev = tp * 11
   
   #cost
-  total_calls = tp + fp
-  new_rate = tp / total_calls
-  avg_employee_calls = ((new_rate - old_rate) * 100 * 100) + 1000
-  num_employees = ceiling(total_calls / avg_employee_calls)
-  train_cost = num_employees * 1000
-  cost = (total_calls * 1) + train_cost
-  return(rev - cost)
-}
+#  total_calls = tp + fp
+#  new_rate = tp / total_calls
+#  avg_employee_calls = ((new_rate - old_rate) * 100 * 100) + 1000
+#  num_employees = ceiling(total_calls / avg_employee_calls)
+#  train_cost = num_employees * 1000
+#  cost = (total_calls * 1) + train_cost
+#  return(rev - cost)
+#}
 
 #Finds best value to split data
-find_max = function(pred){
+#find_max = function(pred){
   #Sequence of values for weighing predictions
-  vals = seq(0.005,0.5,by=0.005)
-  max = 0
-  max_x = 0.005
-  for (x in vals){
-  preds = ifelse(pred > x, 1,0)
-  cm = table(as.factor(preds), as.factor(ins_test_labels))
-  fp = cm[2,1]
-  tp = cm[2,2]
-  old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
-  hold = calcu(fp,tp, old_rate)
-    if(hold > max){ 
-      max = hold
-      max_x = x
-    }
-  }
-  return(c(max_x,max))
-}
+#  vals = seq(0.005,0.5,by=0.005)
+#  max = 0
+#  max_x = 0.005
+#  for (x in vals){
+#  preds = ifelse(pred > x, 1,0)
+#  cm = table(as.factor(preds), as.factor(ins_test_labels))
+#  fp = cm[2,1]
+#  tp = cm[2,2]
+#  old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
+#  hold = calcu(fp,tp, old_rate)
+#    if(hold > max){ 
+#      max = hold
+#      max_x = x
+#    }
+#  }
+#  return(c(max_x,max))
+#}
 ```
 
 ## logistical Regression
@@ -130,9 +130,9 @@ logmod = glm(TravelInsurance ~  . + (. * .), data=ins_train_all, family = 'binom
 
 logpred = predict(logmod, ins_test_all)
 
-maxs = find_max(logpred)
+#maxs = find_max(logpred)
 
-logpreds = ifelse(logpred > maxs[1], 1,0)
+logpreds = ifelse(logpred > 0.45, 1,0)
 cm = table(as.factor(logpreds), as.factor(ins_test_labels))
 cm
 
@@ -155,11 +155,11 @@ knnpreds = ifelse(knnpred > 0.45 ,1,0)
 cm = table(as.factor(knnpreds), as.factor(ins_test_labels))
 #cm = confusionMatrix(as.factor(knnpreds),as.factor(tele_test_labels), positive = "1")
 cm
-fp = cm[2,1]
-tp = cm[2,2]
-old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
-knnprof = calcu(fp,tp, old_rate)
-knnprof
+#fp = cm[2,1]
+#tp = cm[2,2]
+#old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
+#knnprof = calcu(fp,tp, old_rate)
+#knnprof
 
 ```
 
@@ -180,11 +180,11 @@ ann_predicted_yes <- model_results$net.result
 annpreds = ifelse(ann_predicted_yes > 0.45 ,1,0)
 cm = table(as.factor(annpreds), as.factor(ins_test_labels))
 cm
-fp = cm[2,1]
-tp = cm[2,2]
-old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
-annprof = calcu(fp,tp, old_rate)
-annprof
+#fp = cm[2,1]
+#tp = cm[2,2]
+#old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
+#annprof = calcu(fp,tp, old_rate)
+#annprof
 ```
 
 ## 4. SVM
@@ -192,8 +192,8 @@ annprof
 svm_mod = ksvm(TravelInsurance ~ . ,data = ins_train_all,kernel = 'rbfdot')
 svmpred = predict(svm_mod, ins_test_all)
 
-maxs = find_max(svmpred)
-maxs
+#maxs = find_max(svmpred)
+#maxs
 svmpreds = ifelse(svmpred > 0.45 ,1,0)
 cm = table(as.factor(svmpreds), as.factor(ins_test_labels))
 cm
@@ -253,17 +253,17 @@ cm
 ```
 
 
-## Majority Vote
+## Majority Vote (Other)
 ```{r}
 #final predictions
-final_pred = ifelse(logpreds + knnpreds + annpreds >= 2, 1,0)
+final_pred = ifelse(logpreds + knnpreds + annpreds + svmpreds + treepred >= 3, 1,0)
 cm = table(as.factor(final_pred), as.factor(ins_test_labels))
 cm
-fp = cm[2,1]
-tp = cm[2,2]
-old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
-final_profit = calcu(fp,tp, old_rate)
-final_profit
+#fp = cm[2,1]
+#tp = cm[2,2]
+#old_rate = (tp + cm[1,2]) / (fp + cm[1,1] + tp + cm[1,2])
+#final_profit = calcu(fp,tp, old_rate)
+#final_profit
 ```
 By combining the three predictions from logistical regression, K-nearest neighbors, and ANN, we can find the majority classification, and find the final expected profit as $4335.
 
